@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ស្ថានភាពនៃរូបធាតុ (Quiz 2)</title>
+    <script>MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] } };</script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        body { font-family: 'Hanuman', 'Siemreap', Arial, sans-serif; background-color: #f0f8ff; padding: 20px; color: #111; text-align: center; margin: 0; }
+        .tab-container { display: flex; justify-content: center; margin-bottom: 20px; background: #1e293b; padding: 10px; border-radius: 8px; max-width: 950px; margin: 0 auto 20px;}
+        .tab-btn { background: #334155; color: #cbd5e1; border: none; padding: 10px 20px; margin: 0 5px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: bold;}
+        .tab-btn.active { background: #38bdf8; color: #0f172a; }
+        .tab-btn.quiz-active { background: #2ecc71; color: white; }
+        .tab-content { display: none; max-width: 950px; margin: 0 auto; }
+        .tab-content.active { display: block; }
+        
+        /* Sim Styles (Dark mode style for E-lab) */
+        .problem-statement { background: #212121; color: #e0e0e0; padding: 18px 25px; border-radius: 8px; border-left: 6px solid #4fc3f7; text-align: left; margin-bottom: 20px; font-size: 17px; font-weight: bold; line-height: 1.8; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .layout-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start; }
+        .sim-area { position: relative; width: 100%; height: auto; background: #1a1a1a; border: 3px solid #455a64; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 12px rgba(0,0,0,0.8); display: block; }
+        svg { display: block; width: 100%; height: auto; max-height: 550px; margin: 0 auto; }
+        .controls-panel { background: #263238; padding: 20px; border-radius: 12px; border: 2px solid #37474f; }
+        .btn-state { background: #37474f; color: white; padding: 15px; font-size: 18px; font-weight: bold; border: 2px solid #546e7a; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 15px; transition: all 0.2s; font-family: 'Siemreap', sans-serif; }
+        .btn-state:hover { background: #455a64; } .btn-state.active { background: #0288d1; border-color: #4fc3f7; }
+        .slider-container { background: #111; padding: 15px; border-radius: 8px; border: 2px solid #333; margin-top: 20px; }
+        .slider-label { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #ffb74d; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; margin: 15px 0; }
+        input[type=range]::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: linear-gradient(to right, #29b6f6, #cfd8dc, #ef5350); }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 26px; width: 26px; border-radius: 50%; background: #fff; margin-top: -8px; border: 3px solid #333; }
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .data-box { background: #212121; padding: 15px; border-radius: 8px; border: 1px solid #455a64; text-align: center; font-size: 14px; font-weight: bold; color: #b0bec5; }
+        .data-box span { font-weight: 900; font-size: 22px; display: block; margin-top: 8px; font-family: 'Arial', sans-serif; color: #fff; }
+        
+        /* Quiz Styles */
+        #quiz-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: left;}
+        .student-info { background: #e8f4f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .student-info select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-family: inherit; font-size: 16px;}
+        .question-block { background: #fdfbfb; padding: 15px; border-left: 4px solid #3498db; margin-bottom: 15px; border-radius: 5px; }
+        .question-block p { font-weight: bold; margin-top: 0; }
+        .question-block label { display: block; margin-bottom: 8px; cursor: pointer; padding: 5px;}
+        .question-block label:hover {background: #e2e8f0; border-radius: 4px;}
+        .submit-btn { background: #2ecc71; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; font-family: inherit;}
+        .submit-btn:hover { background: #27ae60; }
+        .submit-btn:disabled { background: #95a5a6; cursor: not-allowed; }
+        
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px; }
+        .modal-box h3 { color: #2ecc71; margin-top: 0;}
+        .modal-btn { background: #3498db; color: white; border: none; padding: 10px 30px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight:bold;}
+    </style>
+</head>
+<body>
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="openTab(event, 'sim-tab')">១. ការពិសោធតាម E-Lab</button>
+        <button class="tab-btn" onclick="openTab(event, 'quiz-tab')">២. កម្រងសំណួរ (Quiz ២)</button>
+    </div>
+
+    <!-- ផ្នែកទី១: ពិសោធន៍ -->
+    <div id="sim-tab" class="tab-content active">
+        <div class="problem-statement">
+            <strong>VI. ការពិសោធតាម E-Lab (ស្ថានភាពនៃរូបធាតុ)</strong><br>
+            សូមចុចលើប៊ូតុងស្ថានភាពនីមួយៗ (Solid, Liquid, Gas) ឬប្រើរបារអូសដើម្បីផ្តល់កម្ដៅ និងពិនិត្យដំណើរការរបស់វា។
+        </div>
+        <div class="layout-grid">
+            <div class="sim-area">
+                <svg viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <radialGradient id="particleGrad" cx="30%" cy="30%" r="70%"><stop offset="0%" stop-color="#4dd0e1"/><stop offset="100%" stop-color="#006064"/></radialGradient>
+                        <linearGradient id="containerGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#37474f" stop-opacity="0.8"/><stop offset="50%" stop-color="#546e7a" stop-opacity="0.3"/><stop offset="100%" stop-color="#37474f" stop-opacity="0.8"/></linearGradient>
+                    </defs>
+                    <g transform="translate(140, 40)">
+                        <rect x="0" y="0" width="16" height="100" rx="8" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
+                        <circle cx="8" cy="95" r="14" fill="#d32f2f"/>
+                        <rect id="thermoLiquid" x="4" y="60" width="8" height="35" fill="#d32f2f"/>
+                        <text id="lblTemp" x="25" y="55" font-family="Arial" font-weight="bold" font-size="16" fill="#fff">14 K</text>
+                    </g>
+                    <g transform="translate(360, 80)">
+                        <circle cx="0" cy="0" r="35" fill="#eceff1" stroke="#455a64" stroke-width="3"/>
+                        <circle cx="0" cy="0" r="25" fill="#fff" stroke="#cfd8dc" stroke-width="1"/>
+                        <line x1="0" y1="-25" x2="0" y2="-20" stroke="#111" stroke-width="2" transform="rotate(-60)"/>
+                        <line x1="0" y1="-25" x2="0" y2="-20" stroke="#111" stroke-width="2" transform="rotate(0)"/>
+                        <line x1="0" y1="-25" x2="0" y2="-20" stroke="#111" stroke-width="2" transform="rotate(60)"/>
+                        <line id="needleP" x1="0" y1="0" x2="0" y2="-18" stroke="#d32f2f" stroke-width="3" stroke-linecap="round" transform="rotate(-120)"/>
+                        <circle cx="0" cy="0" r="4" fill="#111"/>
+                        <text id="lblPress" x="0" y="48" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="14" fill="#fff">0.0 atm</text>
+                    </g>
+                    <path d="M 150 150 L 350 150 L 350 380 A 10 10 0 0 1 340 390 L 160 390 A 10 10 0 0 1 150 380 Z" fill="url(#containerGrad)" stroke="#78909c" stroke-width="4"/>
+                    <line x1="150" y1="150" x2="350" y2="150" stroke="#b0bec5" stroke-width="6" stroke-linecap="round"/>
+                    <g id="particleGroup"></g>
+                    <g transform="translate(250, 420)">
+                        <path d="M -40 0 L 40 0 L 30 40 L -30 40 Z" fill="#455a64" stroke="#cfd8dc" stroke-width="2"/>
+                        <text id="heatIcon" x="0" y="25" text-anchor="middle" font-size="20">🔥</text>
+                    </g>
+                </svg>
+                <div class="dashboard">
+                    <div class="data-box" style="border-bottom: 4px solid #ef5350;">សីតុណ្ហភាព $T$<br><span id="dashT">14 K</span></div>
+                    <div class="data-box" style="border-bottom: 4px solid #4fc3f7;">សម្ពាធ $P$<br><span id="dashP">0.00 atm</span></div>
+                    <div class="data-box" style="border-bottom: 4px solid #ffb74d;">មាឌធុង $V$<br><span id="dashV">ថេរ (Constant)</span></div>
+                </div>
+            </div>
+            <div class="controls-panel">
+                <div style="font-size: 20px; font-weight: bold; color: #b0bec5; margin-bottom: 20px; border-bottom: 1px solid #455a64; padding-bottom: 10px;">ជម្រើសស្ថានភាព</div>
+                <button class="btn-state active" id="btnSolid">🧊 រឹង (Solid)</button>
+                <button class="btn-state" id="btnLiquid">💧 រាវ (Liquid)</button>
+                <button class="btn-state" id="btnGas">💨 ឧស្ម័ន (Gas)</button>
+                <div class="slider-container">
+                    <div class="slider-label" id="lblAction">អូសដើម្បីផ្តល់ កម្ដៅ/ត្រជាក់</div>
+                    <input type="range" id="sliderHeat" min="-50" max="50" value="0" step="1">
+                    <div style="display: flex; justify-content: space-between; font-size: 24px;"><span>🧊</span><span>🔥</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ផ្នែកទី២: Quiz -->
+    <div id="quiz-tab" class="tab-content">
+        <div id="quiz-container">
+            <h2 style="text-align: center; color: #2c3e50;">កម្រងសំណួរទី២៖ ស្ថានភាពនៃរូបធាតុ</h2>
+            <div class="student-info">
+                <label><b>ជ្រើសរើសថ្នាក់៖</b></label>
+                <select id="classSelect" onchange="updateStudentList()"><option value="G10A">ថ្នាក់ទី ១០A</option><option value="G10B">ថ្នាក់ទី ១០B</option></select>
+                <label><b>ជ្រើសរើសឈ្មោះ៖</b></label>
+                <select id="nameSelect"></select>
+            </div>
+            
+            <div class="question-block">
+                <p>១. នៅពេលរូបធាតុស្ថិតក្នុងសភាពរឹង (Solid) តើម៉ូលេគុលរបស់វាមានចលនាបែបណា?</p>
+                <label><input type="radio" name="q1" value="0"> ក. ហោះហើរយ៉ាងលឿនពាសពេញធុង</label>
+                <label><input type="radio" name="q1" value="10"> ខ. ញ័រនៅនឹងកន្លែងក្នុងទម្រង់ជាបណ្ដាញជិតគ្នា</label>
+                <label><input type="radio" name="q1" value="0"> គ. ហូរធ្លាក់ចុះមកបាតធុង</label>
+            </div>
+            <div class="question-block">
+                <p>២. តើនឹងមានអ្វីកើតឡើងនៅពេលគេផ្តល់កម្ដៅ (Heating) ដល់រូបធាតុរាវ?</p>
+                <label><input type="radio" name="q2" value="0"> ក. វាប្រែជាសភាពរឹងវិញ</label>
+                <label><input type="radio" name="q2" value="10"> ខ. ម៉ូលេគុលចាប់ផ្តើមញ័រខ្លាំង ហើយបែកចេញពីគ្នាទៅជាឧស្ម័ន</label>
+                <label><input type="radio" name="q2" value="0"> គ. សីតុណ្ហភាពរបស់វាថយចុះ</label>
+            </div>
+            <div class="question-block">
+                <p>៣. នៅក្នុងសភាពឧស្ម័ន (Gas) តើកត្តាអ្វីដែលធ្វើឱ្យសម្ពាធ (P) កើនឡើង?</p>
+                <label><input type="radio" name="q3" value="10"> ក. ភាគល្អិតហោះទៅប៉ះទង្គិចនឹងជញ្ជាំងធុងកាន់តែខ្លាំង</label>
+                <label><input type="radio" name="q3" value="0"> ខ. ភាគល្អិតនៅស្ងៀមទ្រឹង</label>
+                <label><input type="radio" name="q3" value="0"> គ. ភាគល្អិតប្រមូលផ្ដុំគ្នានៅបាតធុង</label>
+            </div>
+            <div class="question-block">
+                <p>៤. បើគេដកកម្ដៅចេញ (ត្រជាក់) ពីឧស្ម័ន តើម៉ូលេគុលរបស់វានឹងប្រែប្រួលយ៉ាងណា?</p>
+                <label><input type="radio" name="q4" value="10"> ក. ថយល្បឿន ហើយចាប់ផ្តើមស្រូបចូលគ្នាក្លាយជារាវ</label>
+                <label><input type="radio" name="q4" value="0"> ខ. បង្កើនល្បឿនកាន់តែខ្លាំង</label>
+                <label><input type="radio" name="q4" value="0"> គ. បង្កើតបានជាសម្ពាធខ្ពស់ជាងមុន</label>
+            </div>
+            <div class="question-block">
+                <p>៥. តាមការពិសោធន៍ តើល្បឿនចលនារបស់ម៉ូលេគុលអាស្រ័យផ្ទាល់នឹងអ្វី?</p>
+                <label><input type="radio" name="q5" value="10"> ក. សីតុណ្ហភាព (Temperature)</label>
+                <label><input type="radio" name="q5" value="0"> ខ. មាឌធុង (Volume)</label>
+                <label><input type="radio" name="q5" value="0"> គ. ពណ៌របស់ភាគល្អិត</label>
+            </div>
+            <button id="submitBtn" class="submit-btn" onclick="submitQuiz()">បញ្ជូនចម្លើយទៅកាន់គ្រូ</button>
+        </div>
+    </div>
+
+    <!-- លាក់ឈ្មោះសិស្សពី CSV -->
+    <div id="names-10A" style="display: none;">
+        <option value="អេង  សុវណ្ណថារី">អេង  សុវណ្ណថារី</option><option value="ហេង  ច័ន្ទអាយនីង">ហេង  ច័ន្ទអាយនីង</option><option value="ប៊ុន  ខត្តិយាវតី">ប៊ុន  ខត្តិយាវតី</option><option value="ប៉ាក  ច័ន្ទដាវីត">ប៉ាក  ច័ន្ទដាវីត</option><option value="អ៊ីវ  សុគន្ធបរមី">អ៊ីវ  សុគន្ធបរមី</option><option value="ភូ  លីណា">ភូ  លីណា</option><option value="ពន្លឺ  ពេជ្រចាន់ពិសិដ្ឋ">ពន្លឺ  ពេជ្រចាន់ពិសិដ្ឋ</option><option value="ប៉ុន  សុវណ្ណា">ប៉ុន  សុវណ្ណា</option><option value="ប៉ុន  សុវណ្ណលី">ប៉ុន  សុវណ្ណលី</option><option value="ភូ  សុគន្ធរ័ត្ន">ភូ  សុគន្ធរ័ត្ន</option><option value="ឡាយ  ស៊ុនអាន">ឡាយ  ស៊ុនអាន</option><option value="នួន  នីណា">នួន  នីណា</option><option value="ង៉ែត  សុគន្ធរក្សា">ង៉ែត  សុគន្ធរក្សា</option><option value="ហុក  គីមស៊ាន់">ហុក  គីមស៊ាន់</option><option value="សៀន  ពិសិដ្ឋ">សៀន  ពិសិដ្ឋ</option><option value="លី  សុរក្សា">លី  សុរក្សា</option><option value="គង់  ភារ៉ា">គង់  ភារ៉ា</option><option value="ខន  ស្រីនុត">ខន  ស្រីនុត</option><option value="រិទ្ធ  ទេវរបុត្រ">រិទ្ធ  ទេវរបុត្រ</option><option value="រាជ  បញ្ញាស័ក្តិ">រាជ  បញ្ញាស័ក្តិ</option><option value="គង់  សំរិទ្ធម៉ីលីង">គង់  សំរិទ្ធម៉ីលីង</option><option value="ស៊ី  អ៊ុយហុង">ស៊ី  អ៊ុយហុង</option><option value="សុខា  ម៉ានិច">សុខា  ម៉ានិច</option><option value="ផាត  សុវណ្ណវឌ្ឍនា">ផាត  សុវណ្ណវឌ្ឍនា</option><option value="ប៉ែន  សុខមាន">ប៉ែន  សុខមាន</option><option value="ឆេង  ឡុងហ៊ូន">ឆេង  ឡុងហ៊ូន</option><option value="គុយ  សុធីរាវិសិដ្ឋនាថ">គុយ  សុធីរាវិសិដ្ឋនាថ</option><option value="ម៉ៅ  ស្រីហេង">ម៉ៅ  ស្រីហេង</option><option value="ញ៉ុន  សំភី">ញ៉ុន  សំភី</option><option value="យ៉េត  ចន្ទចេស្តា">យ៉េត  ចន្ទចេស្តា</option>
+    </div>
+    <div id="names-10B" style="display: none;">
+        <option value="លីម​  នូស៊ីម">លីម​  នូស៊ីម</option><option value="មុន្នី  ករុណា">មុន្នី  ករុណា</option><option value="សុវណ្ណ  អាលីហ្សា">សុវណ្ណ  អាលីហ្សា</option><option value="ង៉ែត  ប៊ុនហ៊ួត">ង៉ែត  ប៊ុនហ៊ួត</option><option value="ហង្ស  ពេជ្រពិសី">ហង្ស  ពេជ្រពិសី</option><option value="ស៊ឹង សុវណ្ណរាជ្យ">ស៊ឹង សុវណ្ណរាជ្យ</option><option value="សម  សុបញ្ញា">សម  សុបញ្ញា</option><option value="វិន  សិលា">វិន  សិលា</option><option value="ធា  ណារី">ធា  ណារី</option><option value="សុខ  ពន្លឺ">សុខ  ពន្លឺ</option><option value="រុន  រស្មី">រុន  រស្មី</option><option value="ខូវ  ឡាយអ៊ូ">ខូវ  ឡាយអ៊ូ</option><option value="លីម  គីមឡេង">លីម  គីមឡេង</option><option value="ច័ន្ទ  ​សុខុមវីរៈបុត្រ">ច័ន្ទ  ​សុខុមវីរៈបុត្រ</option><option value="ជួង  ​សិទ្ធិរាជ">ជួង  ​សិទ្ធិរាជ</option><option value="ណាង​  ណយ">ណាង​  ណយ</option><option value="ថាន់  គឹមឡាយ">ថាន់  គឹមឡាយ</option><option value="ថា  គឹមឡុង">ថា  គឹមឡុង</option><option value="​សុខា​  ម៉ាសូជីន">​សុខា​  ម៉ាសូជីន</option><option value="ញ៉ែត សេង">ញ៉ែត សេង</option><option value="ទេព លីហ្សា">ទេព លីហ្សា</option><option value="ទ្រី លីហុង">ទ្រី លីហុង</option><option value="ម៉េង​ កែវពេជ្របូរម៉ី">ម៉េង​ កែវពេជ្របូរម៉ី</option><option value="វ៉ាត ជីហេង">វ៉ាត ជីហេង</option><option value="តាន់ ឈីងឈីង">តាន់ ឈីងឈីង</option>
+    </div>
+
+    <!-- Modal -->
+    <div id="successModal" class="modal-overlay"><div class="modal-box"><h3>✅ ជោគជ័យ!</h3><p id="modalMessage"></p><button class="modal-btn" onclick="closeModal()">OK (បិទផ្ទាំង)</button></div></div>
+
+    <script>
+        function openTab(evt, tabName) {
+            document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+            document.querySelectorAll(".tab-btn").forEach(el => { el.classList.remove("active"); el.classList.remove("quiz-active"); });
+            document.getElementById(tabName).style.display = "block";
+            if(tabName === 'quiz-tab') evt.currentTarget.classList.add("quiz-active");
+            else evt.currentTarget.classList.add("active");
+        }
+        function updateStudentList() {
+            let cls = document.getElementById("classSelect").value;
+            let sel = document.getElementById("nameSelect");
+            sel.innerHTML = '<option value="">-- សូមជ្រើសរើសឈ្មោះរបស់អ្នក --</option>';
+            sel.innerHTML += document.getElementById(cls === "G10A" ? "names-10A" : "names-10B").innerHTML;
+        }
+        window.onload = updateStudentList;
+        function showModal(msg) { document.getElementById("modalMessage").innerText = msg; document.getElementById("successModal").style.display = "flex"; }
+        function closeModal() { document.getElementById("successModal").style.display = "none"; }
+
+        function submitQuiz() {
+            let cls = document.getElementById('classSelect').value;
+            let name = document.getElementById('nameSelect').value;
+            if (!cls || !name) return alert("សូមជ្រើសរើសឈ្មោះ និងថ្នាក់!");
+            let score = 0, count = 0;
+            for (let i = 1; i <= 5; i++) {
+                let rad = document.getElementsByName('q' + i);
+                for (let r of rad) if (r.checked) { score += parseInt(r.value); count++; break; }
+            }
+            if (count < 5) return alert("សូមឆ្លើយសំណួរឱ្យបានគ្រប់ទាំង ៥!");
+            
+            let btn = document.getElementById('submitBtn'); btn.innerText = "កំពុងបញ្ជូន..."; btn.disabled = true;
+            
+            // ⚠️ ដាក់ Web App URL ថ្មីនៅទីនេះ ⚠️
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbyzpwaOBzVGHtN3D-A0zZYFmE0P7L2Thwtt9i6CP_EQj-skgZza37BV11dlGQnXrFfq/exec';
+            let fd = new URLSearchParams();
+            fd.append("sheetName", cls); fd.append("name", name); fd.append("score", score); 
+            fd.append("quizNumber", "Q2"); // ចូល Q2 (Column F)
+
+            if(scriptURL.includes('YOUR_GOOGLE')) {
+                alert("សូមដាក់ Web App URL នៅក្នុងកូដជាមុនសិន!");
+                btn.innerText = "បញ្ជូនចម្លើយទៅកាន់គ្រូ"; btn.disabled = false; return;
+            }
+            fetch(scriptURL, { method: "POST", body: fd })
+            .then(r => r.text()).then(res => {
+                if(res === "Success") {
+                    showModal(`កិច្ចការរបស់អ្នកត្រូវបានបញ្ជូនទៅលោកគ្រូរួចរាល់ដោយជោគជ័យ!`);
+                    btn.innerText = "បានបញ្ជូនរួចរាល់ ✅"; // រក្សាស្ថានភាពបិទ
+                } else {
+                    alert("មានបញ្ហា៖ " + res);
+                    btn.innerText = "បញ្ជូនចម្លើយទៅកាន់គ្រូ"; btn.disabled = false;
+                }
+            }).catch(err => { alert("មានបញ្ហាបណ្តាញទាក់ទង!"); btn.innerText = "បញ្ជូនចម្លើយទៅកាន់គ្រូ"; btn.disabled = false; });
+        }
+
+        // --- SIMULATION LOGIC ---
+        var btnSolid = document.getElementById('btnSolid'), btnLiquid = document.getElementById('btnLiquid'), btnGas = document.getElementById('btnGas');
+        var sliderHeat = document.getElementById('sliderHeat'), heatIcon = document.getElementById('heatIcon');
+        var particleGroup = document.getElementById('particleGroup'), thermoLiquid = document.getElementById('thermoLiquid'), lblTemp = document.getElementById('lblTemp'), needleP = document.getElementById('needleP'), lblPress = document.getElementById('lblPress');
+        var dashT = document.getElementById('dashT'), dashP = document.getElementById('dashP');
+
+        var currentT = 14, targetT = 14, num = 36, particles = [], radius = 7;
+        var l_bound = 150+radius+4, r_bound = 350-radius-4, t_bound = 150+radius+4, b_bound = 390-radius-4;
+
+        var i=0; while(i!==num){
+            var c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            c.setAttribute("r", radius); c.setAttribute("fill", "url(#particleGrad)"); particleGroup.appendChild(c);
+            var bx = 210 + (i%6)*16, by = 370 - Math.floor(i/6)*16;
+            var lx = 170 + (i%12)*14, ly = 370 - Math.floor(i/12)*14;
+            particles.push({el: c, x: bx, y: by, bx: bx, by: by, lx: lx, ly: ly, vx: 0, vy: 0}); i++;
+        }
+
+        function setActiveBtn(btn) { btnSolid.className="btn-state"; btnLiquid.className="btn-state"; btnGas.className="btn-state"; btn.className="btn-state active"; }
+        btnSolid.addEventListener('click', function() { targetT=14; setActiveBtn(btnSolid); });
+        btnLiquid.addEventListener('click', function() { targetT=80; setActiveBtn(btnLiquid); });
+        btnGas.addEventListener('click', function() { targetT=300; setActiveBtn(btnGas); });
+
+        var isDragging = false;
+        sliderHeat.addEventListener('input', function() {
+            isDragging = true; var hVal = parseFloat(sliderHeat.value);
+            if(hVal===0) heatIcon.textContent="➖";
+            else { heatIcon.textContent = (Math.max(hVal,0)===hVal) ? "🔥" : "🧊"; targetT += hVal*0.1; }
+            targetT = Math.min(1000, Math.max(0, targetT));
+        });
+        function resetSlider() { isDragging = false; sliderHeat.value=0; heatIcon.textContent="➖"; }
+        sliderHeat.addEventListener('mouseup', resetSlider); sliderHeat.addEventListener('touchend', resetSlider); sliderHeat.addEventListener('mouseleave', resetSlider);
+
+        function loopPhysics() {
+            currentT += (targetT - currentT) * 0.02; 
+            var isSolid = (Math.max(currentT, 50) === 50);
+            var isLiquid = (Math.max(currentT, 150) === 150) && (Math.max(currentT, 51) === currentT);
+            
+            if(isDragging) { if(isSolid) setActiveBtn(btnSolid); else if(isLiquid) setActiveBtn(btnLiquid); else setActiveBtn(btnGas); }
+
+            var speed = currentT*0.05, j=0;
+            while(j!==num){
+                var pt = particles[j];
+                if(isSolid){ pt.vx+=(pt.bx-pt.x)*0.1; pt.vy+=(pt.by-pt.y)*0.1; pt.vx+=(Math.random()-0.5)*speed*0.1; pt.vy+=(Math.random()-0.5)*speed*0.1; pt.vx*=0.8; pt.vy*=0.8; }
+                else if(isLiquid){ pt.vy+=0.2; pt.vx+=(pt.lx-pt.x)*0.01; pt.vy+=(pt.ly-pt.y)*0.01; pt.vx+=(Math.random()-0.5)*speed*0.3; pt.vy+=(Math.random()-0.5)*speed*0.3; pt.vx*=0.92; pt.vy*=0.92; }
+                else{ pt.vx+=(Math.random()-0.5)*speed*0.1; pt.vy+=(Math.random()-0.5)*speed*0.1; pt.vx*=0.99; pt.vy*=0.99; }
+
+                pt.x+=pt.vx; pt.y+=pt.vy;
+                if(Math.max(pt.x,l_bound)===l_bound) {pt.x=l_bound; pt.vx=Math.abs(pt.vx);}
+                if(Math.min(pt.x,r_bound)===r_bound) {pt.x=r_bound; pt.vx=-Math.abs(pt.vx);}
+                if(Math.max(pt.y,t_bound)===t_bound) {pt.y=t_bound; pt.vy=Math.abs(pt.vy);}
+                if(Math.min(pt.y,b_bound)===b_bound) {pt.y=b_bound; pt.vy=-Math.abs(pt.vy);}
+
+                pt.el.setAttribute("cx", pt.x); pt.el.setAttribute("cy", pt.y); j++;
+            }
+
+            var safeThermY = Math.max(10, Math.min(95 - (currentT*0.085), 95));
+            thermoLiquid.setAttribute("y", safeThermY); thermoLiquid.setAttribute("height", 95 - safeThermY);
+            lblTemp.textContent = Math.round(currentT)+" K"; dashT.innerText = Math.round(currentT)+" K";
+
+            var pressure = (Math.max(currentT, 100)===currentT) ? (currentT-100)*0.005+(Math.random()*0.05) : 0;
+            var safeAngle = Math.min(120, Math.max(-120, -120 + (pressure*48)));
+            needleP.setAttribute("transform", "rotate("+safeAngle+")");
+            lblPress.textContent = Math.max(0, pressure).toFixed(2)+" atm"; dashP.innerText = Math.max(0, pressure).toFixed(2)+" atm";
+
+            requestAnimationFrame(loopPhysics);
+        }
+        loopPhysics();
+    </script>
+</body>
+</html>
